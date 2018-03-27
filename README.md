@@ -15,8 +15,15 @@ $> cd glfx
 $> tsc
 ```
 ## Usage
-GLFX provides just the basic helpers for you to start with WebGL. You must first create a WebGL context with `glfx.createContext` and then start rendering stuff.
+First you need include it in your HTML file:
+```html
+<script type="text/javascript" src="./dist/glfx.js"></script>
+```
+All the types and functions will be under the `glfx` namespace!
 
-Example: See ![index.html]()
+GLFX provides just the basic helpers for you to start with WebGL.
 
-![GLFX](https://github.com/DCubix/glfx/raw/master/src/cover.jpg)
+## Example
+See [index.html](https://github.com/DCubix/glfx/blob/master/index.html)
+
+![GLFX](https://github.com/DCubix/glfx/blob/master/cover.jpg)

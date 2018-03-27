@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"noImplicitAny": true,
+		"removeComments": true,
+		"outFile": "./dist/glfx.js",
+		"target": "es6",
+		"alwaysStrict": true
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"**/*.spec.ts"
+	]
+}

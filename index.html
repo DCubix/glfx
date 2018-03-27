@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>GLFX</title>
+	</head>
+	<body>
+		<style type="text/css">
+		* { margin: 0; padding: 0; }
+		body, html {
+			width: 100%;
+			height: 100%;
+		}
+		.glfx {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+		}
+		.floating-panel {
+			display: flex;
+			flex-direction: column;
+			position: absolute;
+			z-index: 10;
+			left: 15px;
+			top: 15px;
+			padding: 15px;
+			border-radius: 5px;
+			box-sizing: border-box;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+			background: #fff;
+		}
+		</style>
+		<script id="terrainV" type="x-shader/x-vertex">
+			precision highp float;
+			attribute vec3 vPosition;
+			attribute vec3 vNormal;
+			attribute vec2 vUV;
+			attribute vec4 vColor;
+
+			uniform mat4 mProjection;
+			uniform mat4 mView;
+			uniform mat4 mModel;
+
+			varying vec4 oPosition;
+			varying vec3 oNormal;
+			varying vec2 oUV;
+			varying vec4 oColor;
+
+			void main() {
+				mat4 mViewModel = mView * mModel;
+				vec4 pos = mViewModel * vec4(vPosition, 1.0);
+				gl_Position = mProjection * pos;
+				oNormal = normalize(mViewModel * vec4(vNormal, 0.0)).xyz;
+				oUV = vUV;
+				oColor = vColor;
+				oPosition = pos;
+			}
+		</script>
+		<script id="terrainF" type="x-shader/x-fragment">
+			precision mediump float;
+			varying vec4 oPosition;
+			varying vec3 oNormal;
+			varying vec2 oUV;
+			varying vec4 oColor;
+
+			uniform sampler2D tGrass;
+			uniform sampler2D tRock;
+			uniform sampler2D tSnow;
+
+			vec3 color_from_height(float height, float uvscale) {
+				vec3 terrain_colours[3];
+				terrain_colours[0] = texture2D(tGrass, oUV * uvscale).rgb;
+				terrain_colours[1] = texture2D(tRock, oUV * uvscale).rgb;
+				terrain_colours[2] = texture2D(tSnow, oUV * uvscale).rgb;
+
+				float hscaled = height * 2.0 - 1e-05;
+				int hi = int(hscaled);
+				float hfrac = hscaled - float(hi);
+				if (hi == 0)
+					return mix(terrain_colours[0], terrain_colours[1], hfrac);
+				else
+					return mix(terrain_colours[1], terrain_colours[2], hfrac);
+				return vec3(0.0, 0.0, 0.0);
+			}
+
+			void main() {
+				float height = oColor.r;
+				vec3 L = vec3(-1.0, 0.5, 0.0);
+				float nl = max(dot(normalize(oNormal), L), 0.0) + 0.15;
+
+				gl_FragColor = vec4(color_from_height(height, 16.0) * nl, 1.0);
+			}
+		</script>
+
+		<script type="text/javascript" src="./dist/glfx.js"></script>
+		<canvas class="glfx" id="glfx" width="640" height="480">
+			ERROR
+		</canvas>
+		<div class="floating-panel">
+			<h3>Terrain Generator</h3>
+			<p>Step</p>
+			<input id="step" type="number" min="4" max="16" value="4" />
+			<p>Scale</p>
+			<input id="scale" type="number" min="0.05" max="10.0" step="0.05" value="0.1" />
+			<p>Height</p>
+			<input id="hscale" type="number" min="1.0" max="100.0" step="0.1" value="5.0" />
+			<p>Height Map File</p>
+			<input id="heightmap-path" type="text" />
+			<button onclick="loadHeightMap()">Generate!</button>
+		</div>
+		<script type="text/javascript">
+			glfx.createContext("glfx");
+			let gl = glfx.GL;
+			let canvas = glfx.Canvas;
+
+			class Vert {
+				constructor(position, normal, uv, color) {
+					this.position = position;
+					this.normal = normal;
+					this.uv = uv;
+					this.color = color;
+					this.fmt = new glfx.VertexFormat();
+					this.fmt.add("vPosition", 3, false);
+					this.fmt.add("vNormal", 3, false);
+					this.fmt.add("vUV", 2, false);
+					this.fmt.add("vColor", 4, true);
+				}
+
+				getFormat() {
+					return this.fmt;
+				}
+
+				toArray() {
+					return [
+						this.position.x, this.position.y, this.position.z,
+						this.normal.x, this.normal.y, this.normal.z,
+						this.uv.x, this.uv.y,
+						this.color.x, this.color.y, this.color.z, this.color.w
+					];
+				}
+
+				getPosition() {
+					return this.position;
+				}
+
+				getNormal() {
+					return this.normal;
+				}
+
+				setNormal(n) {
+					this.normal = n;
+				}
+			}
+
+			const FOV = 50;
+
+			gl.enable(gl.DEPTH_TEST);
+
+			let proj = glfx.Mat4.perspective(Math.radians(FOV), canvas.width / canvas.height, 0.01, 1000.0);;
+			let view = glfx.Mat4.translation(0, -12, -20).mul(glfx.Mat4.rotationX(Math.radians(-45)));
+			let model = glfx.Mat4.ident();
+
+			let shader = new glfx.Shader(
+				document.getElementById("terrainV").innerHTML,
+				document.getElementById("terrainF").innerHTML
+			);
+			let grass = new glfx.Texture2D("./grass.png");
+			let rock = new glfx.Texture2D("./rock.png");
+			let snow = new glfx.Texture2D("./snow.png");
+
+			let terrain = null;
+			
+			function loadHeightMap() {
+				let img = new Image();
+				img.crossOrigin = "Anonymous";
+				img.onload = function() {
+					var cv = document.createElement('canvas');
+					var ctx = cv.getContext('2d');
+					cv.width = img.width;
+					cv.height = img.height;
+					ctx.drawImage(img, 0, 0);
+
+					let STEP = document.getElementById("step").value;
+					let SCALE = document.getElementById("scale").value;
+					let HEIGHT_SCALE = document.getElementById("hscale").value;
+					if (document.getElementById("heightmap-path").value === "") {
+						STEP = 4;
+						SCALE = 0.25;
+						HEIGHT_SCALE = 7.0;
+					}
+
+					let TSIZE = ~~(img.width / STEP);
+
+					if (terrain !== null) {
+						terrain.delete();
+					}
+					terrain = new glfx.Mesh();
+					for (let y = 0; y < TSIZE; y++) {
+						for (let x = 0; x < TSIZE; x++) {
+							let color = ctx.getImageData(x * STEP, y * STEP, 1, 1).data;
+							let h = (color[0] / 255.0);
+							let height = (h * HEIGHT_SCALE);
+							let u = x / TSIZE;
+							let v = y / TSIZE;
+							terrain.addVertex(
+								new Vert(
+									new glfx.Vec3((x - TSIZE / 2) * SCALE, height, (y - TSIZE / 2) * SCALE),
+									new glfx.Vec3(),
+									new glfx.Vec2(u, v),
+									new glfx.Vec4(h, h, h, h)
+								)
+							);
+						}
+					}
+					for (let y = 0; y < TSIZE-1; y++) {
+						for (let x = 0; x < TSIZE; x++) {
+							let i = x + y * TSIZE;
+							let ni = x + (y + 1) * TSIZE;
+							terrain.addIndex(i);
+							terrain.addIndex(ni);
+						}
+						terrain.addIndex((y + 2) * TSIZE - 1);
+						terrain.addIndex((y + 1) * TSIZE );
+					}
+					
+					terrain.process(new glfx.NormalCalculator(gl.TRIANGLE_STRIP));
+					terrain.flush();
+				}
+				if (document.getElementById("heightmap-path").value !== "") {
+					img.src = document.getElementById("heightmap-path").value;
+				} else {
+					img.src = "./terrain3.png";
+				}
+			}
+			loadHeightMap();
+
+			let rot = 0;
+			window.onresize = function(e) {
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+				proj = glfx.Mat4.perspective(Math.radians(FOV), canvas.width / canvas.height, 0.01, 1000.0);
+				gl.viewport(0, 0, canvas.width, canvas.height);
+			};
+			window.onresize(null);
+
+			function mainLoop() {
+				gl.clearColor(0, 0, 0, 1.0);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+				if (terrain !== null) {
+					grass.bind(0);
+					rock.bind(1);
+					snow.bind(2);
+
+					shader.bind();
+					shader.getUniform("mProjection").setMat4(proj);
+					shader.getUniform("mView").setMat4(view);
+					shader.getUniform("mModel").setMat4(model);
+					shader.getUniform("tGrass").setInt(0);
+					shader.getUniform("tRock").setInt(1);
+					shader.getUniform("tSnow").setInt(2);
+					terrain.render(gl.TRIANGLE_STRIP, shader);
+				}
+
+				model = glfx.Mat4.rotationY(rot);
+				rot += 0.0025;
+
+				glfx.nextFrame(mainLoop);
+			}
+
+			mainLoop();
+		</script>
+	</body>
+</html>

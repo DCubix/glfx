@@ -70,6 +70,13 @@ namespace glfx {
 			GL.deleteShader(fs);
 		}
 
+		static fromHTMLElement(veid: string, feid: string): Shader {
+			return new Shader(
+				document.getElementById(veid).innerHTML,
+				document.getElementById(feid).innerHTML
+			);
+		}
+
 		bind() {
 			GL.useProgram(this.program);
 		}

@@ -3,6 +3,10 @@ namespace glfx {
 		constructor(public size: number, public normalized: boolean) {}
 	}
 
+	/**
+	 * The VertexFormat class is used to specify what
+	 * attributes will be passed to the shader.
+	 */
 	export class VertexFormat {
 		private attribs: Dict<VertexAttrib>;
 
@@ -10,6 +14,12 @@ namespace glfx {
 			this.attribs = new Dict();
 		}
 
+		/**
+		 * Add a new attribute to the format.
+		 * @param name Attribute name (Should match the one in the shader).
+		 * @param size Number of components.
+		 * @param norm Should the attribute be normalized (0..1 range)?
+		 */
 		add(name: string, size: number, norm: boolean) {
 			this.attribs.add(name, new VertexAttrib(size, norm));
 		}
@@ -22,6 +32,10 @@ namespace glfx {
 			return off;
 		}
 
+		/**
+		 * Enables all the attributes.
+		 * @param shader A shader object to get the attribute locations from.
+		 */
 		bind(shader: Shader) {
 			let stride = this.size;
 			let off = 0;
@@ -36,6 +50,10 @@ namespace glfx {
 			}
 		}
 
+		/**
+		 * Disables all the attributes.
+		 * @param shader A shader object to get the attribute locations from.
+		 */
 		unbind(shader: Shader) {
 			for (let k of this.attribs.keys()) {
 				let loc = shader.getAttribLocation(k);
@@ -46,6 +64,14 @@ namespace glfx {
 		}
 	}
 
+	/**
+	 * Base interface for Vertex types.
+	 * You should implement these methods in your custom vertex type
+	 * in order to use it in the Mesh class.
+	 * Note that in JavaScript this interface doesn't exist,
+	 * so you just need to implement these methods without
+	 * extending anything.
+	 */
 	export interface IVertex {
 		getFormat(): VertexFormat;
 		toArray(): Array<number>;
@@ -54,10 +80,26 @@ namespace glfx {
 		setNormal(n: Vec3): void;
 	}
 
+	/**
+	 * Mesh processor interface.
+	 * Use this to process the mesh data before flushing it.
+	 * 
+	 * Note that in JavaScript this interface doesn't exist,
+	 * so you just need to implement these methods without
+	 * extending anything.
+	 */
 	export interface IProcessor<V extends IVertex> {
+		/**
+		 * Processes the mesh's data
+		 * @param mesh Some mesh to process.
+		 */
 		process(mesh: Mesh<V>): void;
 	}
 
+	/**
+	 * NormalCalculator mesh processor.
+	 * Calculates the vertex normals based on the primitive type.
+	 */
 	export class NormalCalculator<V extends IVertex> implements IProcessor<V> {
 		constructor(public mode: number) { }
 
@@ -121,6 +163,11 @@ namespace glfx {
 		}
 	}
 
+	/**
+	 * Generic Mesh type.
+	 * You can specify any Vertex type as long as it implements IVertex.
+	 * @see IVertex
+	 */
 	export class Mesh<V extends IVertex> implements IGLResource {
 		private vbo: WebGLBuffer;
 		private ibo: WebGLBuffer;
@@ -132,6 +179,11 @@ namespace glfx {
 		public vertices: Array<V>;
 		public indices: Array<number>;
 
+		/**
+		 * Mesh constructor.
+		 * @param indexed If true, it will use drawElements, and drawArrays otherwise.
+		 * @param dynamic Marks if the mesh data will change.
+		 */
 		constructor(indexed: boolean = true, dynamic: boolean = false) {
 			this.vbo = GL.createBuffer();
 			this.format = null;
@@ -146,6 +198,10 @@ namespace glfx {
 			else this.ibo = null;
 		}
 
+		/**
+		 * Clears the mesh data.
+		 * In order for this to work, the mesh must be dynamic!
+		 */
 		clear() {
 			this.vertices = [];
 			this.indices = [];
@@ -154,18 +210,37 @@ namespace glfx {
 		get vertexCount(): number { return this.vertices.length; }
 		get indexCount(): number { return this.indices.length; }
 
+		/**
+		 * Adds a single vertex to the Mesh.
+		 * @param v Vertex
+		 */
 		addVertex(v: V) {
 			this.vertices.push(v);
 		}
 
+		/**
+		 * Adds an index to the Mesh.
+		 * @param i Index value.
+		 */
 		addIndex(i: number) {
 			this.indices.push(i);
 		}
 
+		/**
+		 * Adds a triangle to the Mesh.
+		 * @param i0 Index 0
+		 * @param i1 Index 1
+		 * @param i2 Index 2
+		 */
 		addTriangle(i0: number, i1: number, i2: number) {
 			this.indices.push(i0, i1, i2);
 		}
 
+		/**
+		 * Gets an index from the index array.
+		 * @param i Index value.
+		 * @returns An index from the index array if the mesh is indexed, otherwise it just returns i.
+		 */
 		getIndex(i: number) {
 			if (this.indexed) {
 				return this.indices[i];
@@ -173,10 +248,17 @@ namespace glfx {
 			return i;
 		}
 
+		/**
+		 * Processes the mesh with a Mesh processor.
+		 * @param processor Mesh processor.
+		 */
 		process(processor: IProcessor<V>) {
 			processor.process(this);
 		}
 
+		/**
+		 * Uploads/Updates the Mesh data to the GPU.
+		 */
 		flush() {
 			if (this.vertices.length == 0) return;
 			if (this.format == null) {
@@ -218,6 +300,11 @@ namespace glfx {
 			GL.bindBuffer(GL.ARRAY_BUFFER, null);
 		}
 
+		/**
+		 * Displays the awesome Mesh in 3D in realtime with shaders on the screen!
+		 * @param mode Primitive type. GL.TRIANGLES, GL.LINES, etc...
+		 * @param shader A Shader objects to render the mesh with.
+		 */
 		render(mode: number, shader: Shader) {
 			if (this.indexed) {
 				GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, this.ibo);
@@ -236,6 +323,9 @@ namespace glfx {
 			GL.bindBuffer(GL.ARRAY_BUFFER, null);
 		}
 
+		/**
+		 * Completely obliterates this Mesh.
+		 */
 		destroy(): void {
 			GL.deleteBuffer(this.vbo);
 			if (this.indexed) GL.deleteBuffer(this.ibo);

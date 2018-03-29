@@ -84,6 +84,11 @@ namespace glfx {
 			}
 			return new Vec2(this.x / v.x, this.y / v.y);
 		}
+
+		set(x: number, y: number) {
+			this.x = x;
+			this.y = y;
+		}
 	}
 
 	export class Vec3 {

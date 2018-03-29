@@ -2,8 +2,8 @@ namespace glfx {
 	export class Texture2D implements IGLResource {
 		private id: WebGLTexture;
 		private ispow2: boolean;
-		private width: number;
-		private height: number;
+		public width: number;
+		public height: number;
 		public valid: boolean;
 
 		constructor(src: string = null, width: number = 1, height: number = 1) {

@@ -288,13 +288,13 @@ namespace glfx {
 	
 		static ortho(l: number, r: number, t: number, b: number, n: number, f: number): Mat4 {
 			let w = r - l;
-			let h = t - b;
+			let h = b - t;
 			let d = f - n;
 			return new Mat4([
-				2.0 / w,	 0.0,	   0.0, -(r + l) / w,
-					0.0, 2.0 / h,	   0.0, -(t + b) / h,
-					0.0,	 0.0, -2.0 / d, -(f + n) / d,
-					0.0,	 0.0,	   0.0,			 1.0,
+					 2.0 / w,			0.0,		  0.0, 0.0,
+						 0.0,		2.0 / h,		  0.0, 0.0,
+						 0.0,			0.0, 	 -2.0 / d, 0.0,
+				-(r + l) / w,  -(t + b) / h, -(f + n) / d, 1.0
 			]);
 		}
 	

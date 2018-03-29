@@ -3,6 +3,7 @@ interface Math {
 	degrees(r: number): number;
 	cot(a: number): number;
 	isPowerOfTwo(v: number): boolean;
+	sinCos(a: number): Array<number>;
 }
 
 Math.radians = function(d: number): number {
@@ -19,6 +20,28 @@ Math.cot = function(a: number): number {
 
 Math.isPowerOfTwo = function(v: number): boolean {
 	return (v & (v - 1)) == 0;
+}
+
+Math.sinCos = function(a: number): Array<number> {
+	return [Math.sin(a), Math.cos(a)];
+}
+
+interface Array<T> {
+	first(): T;
+	last(): T;
+	empty(): boolean;
+}
+
+Array.prototype.first = function() {
+	return this[0];
+}
+
+Array.prototype.last = function() {
+	return this[this.length-1];
+}
+
+Array.prototype.empty = function() {
+	return this.length == 0;
 }
 
 namespace glfx {

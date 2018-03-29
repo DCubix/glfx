@@ -118,15 +118,15 @@
 					this.normal = normal;
 					this.uv = uv;
 					this.color = color;
-					this.fmt = new glfx.VertexFormat();
-					this.fmt.add("vPosition", 3, false);
-					this.fmt.add("vNormal", 3, false);
-					this.fmt.add("vUV", 2, false);
-					this.fmt.add("vColor", 4, true);
 				}
 
 				getFormat() {
-					return this.fmt;
+					let fmt = new glfx.VertexFormat();
+					fmt.add("vPosition", 3, false);
+					fmt.add("vNormal", 3, false);
+					fmt.add("vUV", 2, false);
+					fmt.add("vColor", 4, true);
+					return fmt;
 				}
 
 				toArray() {

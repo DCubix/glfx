@@ -227,6 +227,14 @@ namespace glfx {
 		}
 
 		/**
+		 * Adds an index to the Mesh based on the maximum index.
+		 * @param i Index value.
+		 */
+		addIndexBase(i: number) {
+			this.indices.push(i + this.vertices.length);
+		}
+
+		/**
 		 * Adds a triangle to the Mesh.
 		 * @param i0 Index 0
 		 * @param i1 Index 1
@@ -234,6 +242,42 @@ namespace glfx {
 		 */
 		addTriangle(i0: number, i1: number, i2: number) {
 			this.indices.push(i0, i1, i2);
+		}
+
+		/**
+		 * Adds a Quad (2 triangles) to the Mesh.
+		 * @param v 
+		 */
+		addQuad(v: Array<V>) {
+			if (v.length < 4) return;
+			let b = this.vertices.length;
+			this.vertices.push(...v);
+			this.addTriangle(b+0, b+1, b+2);
+			this.addTriangle(b+2, b+3, b+0);
+		}
+
+		/**
+		 * Adds a conved polygon to the Mesh.
+		 * @param v 
+		 */
+		addConvex(v: Array<V>) {
+			if (v.length < 3) return;
+			let b = this.vertices.length;
+			this.vertices.push(...v);
+
+			for (let i = 1; i < v.length-1; i++) {
+				this.indices.push(b + 0);
+				this.indices.push(b + i);
+				this.indices.push(b + i + 1);
+			}
+		}
+		
+		addAll(vs: Array<V>, is: Array<number>) {
+			let b = this.vertices.length;
+			this.vertices.push(...vs);
+			for (let i of is) {
+				this.indices.push(b + i);
+			}
 		}
 
 		/**
@@ -301,20 +345,22 @@ namespace glfx {
 		}
 
 		/**
-		 * Displays the awesome Mesh in 3D in realtime with shaders on the screen!
+		 * Renders the Mesh.
 		 * @param mode Primitive type. GL.TRIANGLES, GL.LINES, etc...
 		 * @param shader A Shader objects to render the mesh with.
 		 */
-		render(mode: number, shader: Shader) {
+		render(mode: number, shader: Shader, offset: number = 0, count: number = -1) {
 			if (this.indexed) {
 				GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, this.ibo);
 			}
 			GL.bindBuffer(GL.ARRAY_BUFFER, this.vbo);
 			this.format.bind(shader);
 			if (this.indexed) {
-				GL.drawElements(mode, this.indexCount, GL.UNSIGNED_SHORT, 0);
+				let cnt = count == -1 ? this.indexCount : count;
+				GL.drawElements(mode, cnt, GL.UNSIGNED_SHORT, offset);
 			} else {
-				GL.drawArrays(mode, 0, this.vertexCount);
+				let cnt = count == -1 ? this.vertexCount : count;
+				GL.drawArrays(mode, offset, cnt);
 			}
 			this.format.unbind(shader);
 			if (this.indexed) {

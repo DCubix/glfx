@@ -1,4 +1,4 @@
-namespace glfx {
+namespace GLFX {
 	class VertexAttrib {
 		constructor(public size: number, public normalized: boolean) {}
 	}

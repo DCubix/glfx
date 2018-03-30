@@ -1,4 +1,4 @@
-namespace glfx {
+namespace GLFX {
 	export class Mat4 {
 		private rows: Array<Vec4>;
 		private fa: Float32Array;

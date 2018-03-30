@@ -108,9 +108,9 @@
 			<button onclick="loadHeightMap()">Generate!</button>
 		</div>
 		<script type="text/javascript">
-			glfx.createContext("glfx");
-			let gl = glfx.GL;
-			let canvas = glfx.Canvas;
+			GLFX.createContext("glfx");
+			let gl = GLFX.GL;
+			let canvas = GLFX.Canvas;
 
 			class Vert {
 				constructor(position, normal, uv, color) {
@@ -121,7 +121,7 @@
 				}
 
 				getFormat() {
-					let fmt = new glfx.VertexFormat();
+					let fmt = new GLFX.VertexFormat();
 					fmt.add("vPosition", 3, false);
 					fmt.add("vNormal", 3, false);
 					fmt.add("vUV", 2, false);
@@ -155,17 +155,17 @@
 
 			gl.enable(gl.DEPTH_TEST);
 
-			let proj = glfx.Mat4.perspective(Math.radians(FOV), canvas.width / canvas.height, 0.01, 1000.0);;
-			let view = glfx.Mat4.translation(0, -12, -20).mul(glfx.Mat4.rotationX(Math.radians(-45)));
-			let model = glfx.Mat4.ident();
+			let proj = GLFX.Mat4.perspective(Math.radians(FOV), canvas.width / canvas.height, 0.01, 1000.0);;
+			let view = GLFX.Mat4.translation(0, -12, -20).mul(GLFX.Mat4.rotationX(Math.radians(-45)));
+			let model = GLFX.Mat4.ident();
 
-			let shader = new glfx.Shader(
+			let shader = new GLFX.Shader(
 				document.getElementById("terrainV").innerHTML,
 				document.getElementById("terrainF").innerHTML
 			);
-			let grass = new glfx.Texture2D("./grass.png");
-			let rock = new glfx.Texture2D("./rock.png");
-			let snow = new glfx.Texture2D("./snow.png");
+			let grass = new GLFX.Texture2D("./grass.png");
+			let rock = new GLFX.Texture2D("./rock.png");
+			let snow = new GLFX.Texture2D("./snow.png");
 
 			let terrain = null;
 			
@@ -193,7 +193,7 @@
 					if (terrain !== null) {
 						terrain.delete();
 					}
-					terrain = new glfx.Mesh();
+					terrain = new GLFX.Mesh();
 					for (let y = 0; y < TSIZE; y++) {
 						for (let x = 0; x < TSIZE; x++) {
 							let color = ctx.getImageData(x * STEP, y * STEP, 1, 1).data;
@@ -203,10 +203,10 @@
 							let v = y / TSIZE;
 							terrain.addVertex(
 								new Vert(
-									new glfx.Vec3((x - TSIZE / 2) * SCALE, height, (y - TSIZE / 2) * SCALE),
-									new glfx.Vec3(),
-									new glfx.Vec2(u, v),
-									new glfx.Vec4(h, h, h, h)
+									new GLFX.Vec3((x - TSIZE / 2) * SCALE, height, (y - TSIZE / 2) * SCALE),
+									new GLFX.Vec3(),
+									new GLFX.Vec2(u, v),
+									new GLFX.Vec4(h, h, h, h)
 								)
 							);
 						}
@@ -222,7 +222,7 @@
 						terrain.addIndex((y + 1) * TSIZE );
 					}
 					
-					terrain.process(new glfx.NormalCalculator(gl.TRIANGLE_STRIP));
+					terrain.process(new GLFX.NormalCalculator(gl.TRIANGLE_STRIP));
 					terrain.flush();
 				}
 				if (document.getElementById("heightmap-path").value !== "") {
@@ -237,7 +237,7 @@
 			window.onresize = function(e) {
 				canvas.width = window.innerWidth;
 				canvas.height = window.innerHeight;
-				proj = glfx.Mat4.perspective(Math.radians(FOV), canvas.width / canvas.height, 0.01, 1000.0);
+				proj = GLFX.Mat4.perspective(Math.radians(FOV), canvas.width / canvas.height, 0.01, 1000.0);
 				gl.viewport(0, 0, canvas.width, canvas.height);
 			};
 			window.onresize(null);
@@ -261,10 +261,10 @@
 					terrain.render(gl.TRIANGLE_STRIP, shader);
 				}
 
-				model = glfx.Mat4.rotationY(rot);
+				model = GLFX.Mat4.rotationY(rot);
 				rot += 0.0025;
 
-				glfx.nextFrame(mainLoop);
+				GLFX.nextFrame(mainLoop);
 			}
 
 			mainLoop();

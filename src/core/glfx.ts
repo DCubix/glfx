@@ -1,4 +1,4 @@
-namespace glfx {
+namespace GLFX {
 	export var GL: WebGLRenderingContext = null;
 	export var Canvas: HTMLCanvasElement = null;
 
@@ -19,8 +19,8 @@ namespace glfx {
 			canvas.width = width;
 			canvas.height = height;
 		}
-		glfx.Canvas = canvas;
-		glfx.GL = canvas.getContext("webgl");
+		GLFX.Canvas = canvas;
+		GLFX.GL = canvas.getContext("webgl");
 	}
 
 	/**

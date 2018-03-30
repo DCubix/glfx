@@ -44,7 +44,7 @@ Array.prototype.empty = function() {
 	return this.length == 0;
 }
 
-namespace glfx {
+namespace GLFX {
 	export interface IGLResource {
 		destroy(): void;
 	}

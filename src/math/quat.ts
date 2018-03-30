@@ -1,4 +1,4 @@
-namespace glfx {
+namespace GLFX {
 	export class Quat {
 		x: number;
 		y: number;

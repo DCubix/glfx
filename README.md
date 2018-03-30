@@ -19,7 +19,7 @@ First you need include it in your HTML file:
 ```html
 <script type="text/javascript" src="./dist/glfx.js"></script>
 ```
-All the types and functions will be under the `glfx` namespace!
+All the types and functions will be under the `GLFX` namespace!
 
 GLFX provides just the basic helpers for you to start with WebGL.
 

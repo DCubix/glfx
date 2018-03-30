@@ -1,4 +1,4 @@
-namespace glfx {
+namespace GLFX {
 	export class Uniform {
 		private loc: WebGLUniformLocation;
 

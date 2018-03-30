@@ -1,4 +1,4 @@
-namespace glfx {
+namespace GLFX {
 	export class Texture2D implements IGLResource {
 		private id: WebGLTexture;
 		private ispow2: boolean;
